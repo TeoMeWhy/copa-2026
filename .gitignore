@@ -3,3 +3,5 @@
 *.csv
 *.db
 *.png
+
+catboost_info/

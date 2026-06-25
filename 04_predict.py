@@ -63,7 +63,7 @@ df_groups = df_all.dropna(subset=["group"]).copy()
 
 # %%
 
-model = mlflow.sklearn.load_model("models:/copa-mundo/4")
+model = mlflow.sklearn.load_model("models:/copa-mundo/5")
 
 X = df_groups[model.feature_names_in_].copy()
 
@@ -137,4 +137,6 @@ df_combinacoes_analytics = df_combinacoes_analytics[['rank', 'team_current_name'
 df_combinacoes_analytics
 # %%
 
-df_combinacoes_analytics.to_markdown("ranking_copa.md", index=False)
+df_combinacoes_analytics.head(10).to_markdown("ranking_copa.md", index=False)
+
+# %%

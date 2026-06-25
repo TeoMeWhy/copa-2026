@@ -6,6 +6,9 @@ WITH tb_agg_life AS (
             sum(CASE WHEN t2.score > t2.away_score THEN 1 ELSE 0 END) AS qtdWinnerMatches,
             sum(CASE WHEN t2.score < t2.away_score THEN 1 ELSE 0 END) AS qtdLoserMatches,
 
+            avg(CASE WHEN t2.score > t2.away_score THEN 1 ELSE 0 END) AS avgWinnerMatches,
+            avg(CASE WHEN t2.score < t2.away_score THEN 1 ELSE 0 END) AS avgLoserMatches,
+
             COUNT(DISTINCT CASE WHEN t2.tournament = 'FIFA World Cup' THEN t2.year_tournament END) AS qtdWorldCup,
             COUNT(DISTINCT CASE WHEN t2.tournament = 'FIFA World Cup' THEN t2.match_id END) AS qtdWorldCupMatches,
             sum(CASE WHEN t2.tournament = 'FIFA World Cup' THEN t2.score END) AS qtdWorldCupScore,
@@ -21,6 +24,18 @@ WITH tb_agg_life AS (
             sum(CASE WHEN t2.tournament = 'FIFA World Cup qualification' THEN t2.score - t2.away_score END) AS qtdWorldCupQualificationBalanceScore,
             sum(CASE WHEN t2.tournament = 'FIFA World Cup qualification' THEN t2.score > t2.away_score END) AS qtdWorldCupQualificationWinnerMatches,
             sum(CASE WHEN t2.tournament = 'FIFA World Cup qualification' THEN t2.score < t2.away_score END) AS qtdWorldCupQualificationLoserMatches,
+
+            avg(CASE WHEN t2.tournament = 'FIFA World Cup' THEN t2.score END) AS avgWorldCupScore,
+            avg(CASE WHEN t2.tournament = 'FIFA World Cup' THEN t2.away_score END) AS avgWorldCupAwayScore,
+            avg(CASE WHEN t2.tournament = 'FIFA World Cup' THEN t2.score - t2.away_score END) AS avgWorldCupBalanceScore,
+            avg(CASE WHEN t2.tournament = 'FIFA World Cup' THEN t2.score > t2.away_score END) AS avgWorldCupWinnerMatches,
+            avg(CASE WHEN t2.tournament = 'FIFA World Cup' THEN t2.score < t2.away_score END) AS avgWorldCupLoserMatches,
+            avg(CASE WHEN t2.tournament = 'FIFA World Cup qualification' THEN t2.score END) AS avgWorldCupQualificationScore,
+            avg(CASE WHEN t2.tournament = 'FIFA World Cup qualification' THEN t2.away_score END) AS avgWorldCupQualificationAwayScore,
+            avg(CASE WHEN t2.tournament = 'FIFA World Cup qualification' THEN t2.score - t2.away_score END) AS avgWorldCupQualificationBalanceScore,
+            avg(CASE WHEN t2.tournament = 'FIFA World Cup qualification' THEN t2.score > t2.away_score END) AS avgWorldCupQualificationWinnerMatches,
+            avg(CASE WHEN t2.tournament = 'FIFA World Cup qualification' THEN t2.score < t2.away_score END) AS avgWorldCupQualificationLoserMatches,
+
 
             COUNT(DISTINCT CASE WHEN t2.tournament = 'Copa América' THEN t2.year_tournament END) AS qtdeCopaAmerica,
             COUNT(DISTINCT CASE WHEN t2.tournament = 'Copa América' THEN t2.match_id END) AS qtdeCopaAmericaMatches,

@@ -48,7 +48,7 @@ to_remove = [
 
 
 cat_features = [
-    "tournament",
+    # "tournament",
     # "country",
     # "city",
 ]
@@ -56,6 +56,18 @@ cat_features = [
 number_features = [
     "qtdWinnerMatches",
     "qtdLoserMatches",
+    "avgWinnerMatches",
+    "avgLoserMatches",
+    "avgWorldCupScore",
+    "avgWorldCupAwayScore",
+    "avgWorldCupBalanceScore",
+    "avgWorldCupWinnerMatches",
+    "avgWorldCupLoserMatches",
+    "avgWorldCupQualificationScore",
+    "avgWorldCupQualificationAwayScore",
+    "avgWorldCupQualificationBalanceScore",
+    "avgWorldCupQualificationWinnerMatches",
+    "avgWorldCupQualificationLoserMatches",
     "qtdWorldCup",
     "qtdWorldCupMatches",
     "qtdWorldCupScore",
@@ -116,7 +128,7 @@ number_features = [
     "qtdeFifaWorldCupAwayTeamWinner",
     "qtdeFifaWorldCupQualificationAwayTeamMacthes",
     "qtdeFifaWorldCupQualificationAwayTeamBalanceScore",
-    "qtdeFifaWorldCupQualificationAwayTeamWinner",
+    "qtdeFifaWorldCupQualificationAwayTeamWinner"
 ]
 
 
@@ -143,12 +155,12 @@ print("Taxa de resposta Teste:", y_test.mean())
 
 # %%
 
-onehot_encoder = fee.OneHotEncoder(variables=["tournament"])
+# onehot_encoder = fee.OneHotEncoder(variables=["tournament"])
 imputer = fei.ArbitraryNumberImputer(variables=number_features, arbitrary_number=0)
 clf = ensemble.RandomForestClassifier(random_state=42,
                                       criterion="entropy",
                                       max_features=None,
-                                      n_jobs=10,)
+                                      n_jobs=-1,)
 
 params_grid = {
     "n_estimators":[300,400,500,600],
@@ -161,7 +173,8 @@ grid = model_selection.GridSearchCV(
     cv=3,
     scoring="roc_auc",
     verbose=4,
-    n_jobs=2,
+    n_jobs=1,
+    refit=False,
 )
 
 
@@ -173,7 +186,7 @@ with mlflow.start_run(run_name="random-forest") as run:
     mlflow.sklearn.autolog(log_models=False)
     
     model = pipeline.Pipeline(steps=[
-        ('onehot_encoder', onehot_encoder),
+        # ('onehot_encoder', onehot_encoder),
         ('imputer', imputer),
         ('model', grid)
     ])
@@ -223,7 +236,7 @@ with mlflow.start_run(run_name="random-forest") as run:
     mlflow.log_artifact("feature_importance.md")
     
     model_final = pipeline.Pipeline(steps=[
-        ('onehot_encoder', onehot_encoder),
+        # ('onehot_encoder', onehot_encoder),
         ('imputer', imputer),
         ('model', grid.best_estimator_)
     ])

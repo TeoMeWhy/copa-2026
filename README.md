@@ -6,39 +6,45 @@ Este projeto de Ciência de Dados tem como objetivo prever o favoritarismo e o n
 
 ## Ranking Modelo Atual
 
-|   rank | equipe        |   aproveitamento |
-|-------:|:--------------|-----------------:|
-|      1 | France        |        100%      |
-|      2 | Spain         |        96.77%    |
-|      3 | Germany       |        93.54%    |
-|      4 | England       |        87.09%    |
-|      5 | Argentina     |        83.87%    |
-|      6 | Portugal      |        83.87%    |
-|      7 | Brazil        |        83.87%    |
-|      8 | Netherlands   |        80.64%    |
-|      9 | Iran          |        74.19%    |
-|     10 | United States |        67.74%    |
-|     11 | Japan         |        64.51%    |
-|     12 | Ivory Coast   |        64.51%    |
-|     13 | Morocco       |        61.29%    |
-|     14 | Mexico        |        58.06%    |
-|     15 | Senegal       |        58.06%    |
-|     16 | Australia     |        51.61%    |
-|     17 | Belgium       |        48.38%    |
-|     18 | Croatia       |        45.16%    |
-|     19 | Egypt         |        41.93%    |
-|     20 | South Korea   |        41.93%    |
-|     21 | Switzerland   |        35.48%    |
-|     22 | Algeria       |        32.25%    |
-|     23 | Tunisia       |        29.03%    |
-|     24 | Uzbekistan    |        25.80%    |
-|     25 | Jordan        |        22.58%    |
-|     26 | Ghana         |        19.35%    |
-|     27 | Saudi Arabia  |        16.12%    |
-|     28 | Uruguay       |        12.90%    |
-|     29 | Turkey        |        09.67%    |
-|     30 | Scotland      |        06.45%    |
-|     31 | Canada        |        03.22%    |
+> [!WARNING]
+> 2a versão do modelo.
+
+Modelo retreinado com novas variáveis:
+- Removemos as variáveis dos nomes dos times na disputa;
+- Criamos a variável de vitórias históricas;
+
+
+|   rank | equipe         |   aproveitamento |
+|-------:|:---------------|-----------------:|
+|      1 | France         |         0.903226 |
+|      2 | Spain          |         0.83871  |
+|      3 | Brazil         |         0.83871  |
+|      4 | Netherlands    |         0.83871  |
+|      5 | Argentina      |         0.806452 |
+|      6 | Germany        |         0.806452 |
+|      7 | England        |         0.741935 |
+|      8 | Portugal       |         0.612903 |
+|      9 | Belgium        |         0.612903 |
+|     10 | Uruguay        |         0.580645 |
+|     11 | Mexico         |         0.548387 |
+|     12 | Sweden         |         0.516129 |
+|     13 | Croatia        |         0.516129 |
+|     14 | Austria        |         0.483871 |
+|     15 | Switzerland    |         0.451613 |
+|     16 | United States  |         0.419355 |
+|     17 | Turkey         |         0.419355 |
+|     18 | Ecuador        |         0.387097 |
+|     19 | South Korea    |         0.322581 |
+|     20 | Tunisia        |         0.322581 |
+|     21 | Colombia       |         0.322581 |
+|     22 | Scotland       |         0.322581 |
+|     23 | Morocco        |         0.290323 |
+|     24 | Curaçao        |         0.258065 |
+|     25 | Australia      |         0.225806 |
+|     26 | Senegal        |         0.193548 |
+|     27 | Iran           |         0.193548 |
+|     28 | Egypt          |         0.129032 |
+|     29 | Czech Republic |         0.129032 |
 
 ---
 

@@ -25,7 +25,7 @@ query = import_query(f"{query_name}.sql")
 
 dates = [i.strftime("%Y-%m-%d") for i in pd.date_range(start="2000-01-01", end="2026-06-01", freq="D")]
 
-for d in track(dates, description=f"Processandod safras para {query_name}..."):
+for d in track(dates, description=f"Processando safras para {query_name}..."):
     df = pd.read_sql_query(query.format(date=d), con=engine)
     df.to_sql(query_name, con=engine, if_exists="append", index=False)
 

@@ -63,7 +63,7 @@ df_groups = df_all.dropna(subset=["group"]).copy()
 
 # %%
 
-model = mlflow.sklearn.load_model("models:/copa-mundo/2")
+model = mlflow.sklearn.load_model("models:/copa-mundo/4")
 
 X = df_groups[model.feature_names_in_].copy()
 

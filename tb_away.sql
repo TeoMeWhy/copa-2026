@@ -1,8 +1,8 @@
 WITH tb_away AS (
 
     SELECT t1.dt_match,
-        t1.team_current_name,
-        t2.away_team_current_name,
+           t1.team_current_name,
+           t2.away_team_current_name,
 
             count(DISTINCT CASE WHEN t2.tournament = 'Friendly' THEN t2.match_id END) AS qtdeFriendlyAwayTeamMatches,
             sum(CASE WHEN t2.tournament = 'Friendly' THEN t2.score - t2.away_score END) AS qtdeFriendlyAwayTeamBalanceScore,

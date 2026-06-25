@@ -13,6 +13,10 @@ from sklearn import ensemble
 from sklearn import metrics
 from sklearn import pipeline
 
+from lightgbm import LGBMClassifier
+from catboost import CatBoostClassifier, Pool
+
+
 from feature_engine import imputation as fei
 from feature_engine import encoding as fee
 
@@ -38,18 +42,20 @@ to_remove = [
     'winner',
     'score',
     'away_score',
+    "team_current_name",
+    "away_team_current_name",
 ]
 
 
 cat_features = [
-    "team_current_name",
-    "away_team_current_name",
+    "tournament",
     # "country",
     # "city",
-    "tournament",
 ]
 
 number_features = [
+    "qtdWinnerMatches",
+    "qtdLoserMatches",
     "qtdWorldCup",
     "qtdWorldCupMatches",
     "qtdWorldCupScore",
@@ -138,24 +144,25 @@ print("Taxa de resposta Teste:", y_test.mean())
 # %%
 
 onehot_encoder = fee.OneHotEncoder(variables=["tournament"])
-mean_encoder = fee.MeanEncoder(variables=["team_current_name", "away_team_current_name"])
 imputer = fei.ArbitraryNumberImputer(variables=number_features, arbitrary_number=0)
-
-clf = ensemble.RandomForestClassifier(random_state=42, n_jobs=-1)
+clf = ensemble.RandomForestClassifier(random_state=42,
+                                      criterion="entropy",
+                                      max_features=None,
+                                      n_jobs=10,)
 
 params_grid = {
-    "n_estimators": [500],
-    "max_depth": [None],
-    "min_samples_leaf": [20, 30, 50],
-    "max_features": [None],
-    "criterion": ['entropy']
+    "n_estimators":[300,400,500,600],
+    "min_samples_leaf":[25,30,35],
 }
 
-grid = model_selection.GridSearchCV(estimator=clf,
-                                    param_grid=params_grid,
-                                    cv=4,
-                                    scoring="roc_auc",
-                                    verbose=4)
+grid = model_selection.GridSearchCV(
+    estimator=clf,
+    param_grid=params_grid,
+    cv=3,
+    scoring="roc_auc",
+    verbose=4,
+    n_jobs=2,
+)
 
 
 # %%
@@ -163,11 +170,10 @@ mlflow.set_experiment("copa-mundo-tmw")
 
 with mlflow.start_run(run_name="random-forest") as run:
     
-    mlflow.sklearn.autolog()
+    mlflow.sklearn.autolog(log_models=False)
     
     model = pipeline.Pipeline(steps=[
         ('onehot_encoder', onehot_encoder),
-        ('mean_encoder', mean_encoder),
         ('imputer', imputer),
         ('model', grid)
     ])
@@ -208,13 +214,27 @@ with mlflow.start_run(run_name="random-forest") as run:
     
     mlflow.log_artifact("roc_curve.png")
 
-
     features = model[:-1].transform(X_train).columns.tolist()
     feature_importance = pd.DataFrame(model[-1].best_estimator_.feature_importances_,
-                                    index=features,
-                                    columns=["importance"]).sort_values("importance", ascending=False)
+                                      index=features,
+                                      columns=["importance"]).sort_values("importance", ascending=False)
 
     feature_importance.to_markdown("feature_importance.md")
     mlflow.log_artifact("feature_importance.md")
     
+    model_final = pipeline.Pipeline(steps=[
+        ('onehot_encoder', onehot_encoder),
+        ('imputer', imputer),
+        ('model', grid.best_estimator_)
+    ])
+    
+    model_final.fit(X, y)
+    mlflow.sklearn.log_model(model_final, name="model")
+    
 # %%
+
+
+pd.DataFrame(grid.cv_results_).sort_values("rank_test_score")[["params","mean_test_score","std_test_score","rank_test_score"]].head(10)
+# %%
+
+

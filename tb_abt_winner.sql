@@ -13,6 +13,8 @@ SELECT
         t1.score,
         t1.away_score,
         t1.tournament,
+        t2.qtdWinnerMatches,
+        t2.qtdLoserMatches,
        t2.qtdWorldCup,
        t2.qtdWorldCupMatches,
        t2.qtdWorldCupScore,
@@ -90,5 +92,4 @@ WHERE t1.dt_match >= '2000-01-01'
 AND t1.tournament <> 'Friendly'
 
 ORDER BY match_id
-
 ;

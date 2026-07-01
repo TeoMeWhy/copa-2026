@@ -43,7 +43,7 @@ Abaixo estão os principais arquivos e pastas que estruturam nossa solução:
 - [tb_team_away_features.sql](tb_team_away_features.sql): Mantém apenas a fotografia mais recente de confrontos contra adversários específicos.
 - [tb_abt_winner.sql](tb_abt_winner.sql): Combina as tabelas dimensionais e de fatos para formar a Analytical Base Table (ABT) definitiva usada no treinamento.
 - [feature_importance.md](feature_importance.md): Relatório das features mais representativas para a decisão do modelo de classificação.
-- [data/](data/): Diretório contendo todas as fontes de dados brutas e dados específicos das seleções e calendário da Copa 2026 na subpasta [data/2026/](data/2026/).
+- [data](data): Diretório contendo todas as fontes de dados brutas e dados específicos das seleções e calendário da Copa 2026 na subpasta [data/2026](data/2026).
 
 ---
 
@@ -53,11 +53,11 @@ O modelo é alimentado por duas fontes ricas de informações extraídas do Kagg
 
 1. **Dados Históricos de Partidas (1872 até hoje):**
    - Fonte: [International Football Results (1872-2017)](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017)
-   - Contém os arquivos de partidas (results.csv), disputas de pênaltis (shootouts.csv), artilheiros (goalscorers.csv) e mapeamento de nomes antigos de federações futebolísticas (former_names.csv).
+   - Contém os arquivos de partidas [data/results.csv](data/results.csv), disputas de pênaltis [data/shootouts.csv](data/shootouts.csv), artilheiros [data/goalscorers.csv](data/goalscorers.csv) e mapeamento de nomes antigos de federações futebolísticas [data/former_names.csv](data/former_names.csv).
 
 2. **Dados da Copa 2026 (para Predições):**
    - Fonte: [FIFA World Cup Complete Dataset (1930-2026)](https://www.kaggle.com/datasets/kulkarniparth09/fifa-world-cup-complete-dataset-19302026?select=wc_2026_fixtures.csv)
-   - Contém o chaveamento oficial da fase de grupos, calendário de confrontos oficiais e o rol de equipes da Copa 2026 (wc_2026_fixtures.csv e wc_2026_teams.csv).
+   - Contém o chaveamento oficial da fase de grupos, calendário de confrontos oficiais e o rol de equipes da Copa 2026 [data/2026/wc_2026_fixtures.csv](data/2026/wc_2026_fixtures.csv) e [data/2026/wc_2026_teams.csv](data/2026/wc_2026_teams.csv).
 
 ---
 
@@ -71,6 +71,11 @@ Através do script [tb_team_matches.sql](tb_team_matches.sql), duplicamos a pers
 
 ### 2. Agregando o Histórico de Desempenho (Safra a Safra)
 Usamos as tabelas [tb_agg_life.sql](tb_agg_life.sql) e [tb_away.sql](tb_away.sql) para calcular, de forma acumulada e retroativa, o peso histórico de cada seleção em torneios cruciais (Copa do Mundo, eliminatórias da Copa, Copa América, Eurocopa, etc.) até o dia imediatamente anterior a cada partida histórica (`t1.dt_match > t2.dt_match`). Isso permite criar taxas de vitórias históricas, saldo de gols e peso de bagagem competitiva de forma dinâmica e precisa.
+
+Na versão atual, adicionamos um expressivo conjunto de estatísticas globais e agregadas que ampliam a sensibilidade do modelo. As características incorporadas cobrem:
+- **Desempenho Geral Acumulado:** Total e média de vitórias e derrotas acumuladas de cada nação ao longo do tempo (`qtdWinnerMatches`, `qtdLoserMatches`, `avgWinnerMatches`, `avgLoserMatches`).
+- **Aproveitamento Médio nas Copas do Mundo:** Médias históricas de gols marcados, sofridos, saldo de gols diferenciado, número de vitórias e derrotas em fases finais de Copa do Mundo (`avgWorldCupScore`, `avgWorldCupAwayScore`, `avgWorldCupBalanceScore`, `avgWorldCupWinnerMatches`, `avgWorldCupLoserMatches`).
+- **Aproveitamento Médio nas Eliminatórias da Copa:** Médias de desempenho detalhado no processo de qualificação qualificatória para os Mundiais (`avgWorldCupQualificationScore`, `avgWorldCupQualificationAwayScore`, `avgWorldCupQualificationBalanceScore`, `avgWorldCupQualificationWinnerMatches`, `avgWorldCupQualificationLoserMatches`).
 
 ### 3. Decisão de Arquitetura da ABT: Duplicação Simétrica de Partidas
 Na construção da tabela analítica base em [tb_abt_winner.sql](tb_abt_winner.sql), um ponto metodológico essencial é a **Duplicação Simétrica das Partidas**. Para cada jogo real entre Time A e Time B (em torneios não amistosos desde o ano 2000), a base de treinamento registra duas linhas equivalentes:
@@ -88,23 +93,22 @@ Na construção da tabela analítica base em [tb_abt_winner.sql](tb_abt_winner.s
 
 O treinamento e otimização são gerenciados passo a passo no script [03_train.py](03_train.py) integrado à ferramenta **MLflow** para governança de experimentos.
 
-### Transformação e Codificação de Recursos
-Para traduzir as variáveis categóricas dinâmicas em dados numéricos assimiláveis pelo classificador, o pipeline implementa:
-1. **OneHotEncoder** (via Feature Engine) para codificação exclusiva da coluna `tournament` (tipo de partida), diferenciando a importância de uma Copa do Mundo de uma Nations League ou Amistoso.
-2. **MeanEncoder** (via Feature Engine) para as colunas `team_current_name` e `away_team_current_name`. Essa estratégia calcula dinamicamente a taxa de vitórias histórica (target encoding) de cada federação de futebol nacional, representando numericamente a força institucional e tradição ("peso da camisa") daquela seleção frente ao histórico global.
-3. **ArbitraryNumberImputer** imputando `0` para campos com valores ausentes das variáveis numéricas. Essa técnica é filosoficamente robusta por natureza: se um país nunca disputou a Copa América ou a Eurocopa devido ao seu continente geográfico, o valor cumulativo real de jogos e gols nessas federações é logicamente zero.
+### Remodelagem das Variáveis e Eliminação de Vieses
+Com o intuito de mitigar vazamento de dados (*data leakage*) e enviesamento por força do favoritismo direto do nome das federações, o pipeline de dados foi reformulado para remover por completo as variáveis categóricas de nomes de equipes (`team_current_name`, `away_team_current_name`) e o tipo de torneio (`tournament`).
 
-### Classificador e Tuning (Grid Search)
-Utilizamos o algoritmo **Random Forest Classifier**, ideal para extrair relações não lineares de superioridade esportiva e que oferece alta robustez contra overfitting de features correlatas. 
+Sendo assim:
+1. **Remoção de Codificação Categórica:** O pipeline descontinua os passos de OneHotEncoder e MeanEncoder, assegurando que o classificador aprenda unicamente padrões estatísticos globais sem qualquer viés implícito ao nome nominal de um país.
+2. **Imputação Racional de Dados Ausentes:** Mantemos o uso do **ArbitraryNumberImputer** preenchendo com `0` os valores ausentes de variáveis numéricas. Esta decisão é conceitualmente refinada: se uma nação nunca participou da Eurocopa ou da Copa América por fatores geográficos de sua confederação, o volume real acumulado e médias de gols e partidas nesses torneios é estatisticamente nulo.
 
-Para encontrar os melhores parâmetros, realizamos um ajuste minucioso através do **GridSearchCV** do scikit-learn estruturado em uma validação cruzada com 4 dobras (4-Fold Cross Validation):
-- `n_estimators`: [500] (para máxima estabilidade na média probabilística das árvores)
-- `max_depth`: [None] (deixando as árvores crescerem até sua plenitude estrutural)
-- `min_samples_leaf`: [20, 30, 50] (regulando o tamanho das folhas para evitar a memorização de ruídos pontuais)
-- `max_features`: [None] (utilizando todo o espaço vetorial de features na divisão)
-- Métrica de Otimização: Área Sob a Curva ROC (**AUC-ROC**), o melhor indicador para avaliar o ranqueamento probabilístico das forças das seleções.
+### Classificador e Otimização de Hiperparâmetros
+Utilizamos o classificador **Random Forest Classifier** com o critério de entropia (`criterion='entropy'`) e sem restrição de seleção de variáveis (`max_features=None`), o que permite identificar de forma robusta e não linear as nuances de dominância futebolística.
 
-Toda a rodada do treinamento, métricas finais de acurácia, curva ROC (salva no arquivo `roc_curve.png`) e a tabela de pesos em [feature_importance.md](feature_importance.md) são automaticamente persistidas via mlflow.
+Os hiperparâmetros mais refinados foram vasculhados por meio de **GridSearchCV** integrado ao scikit-learn emparelhado em uma validação cruzada com 3 dobras (3-Fold Cross Validation):
+- `n_estimators`: `[300, 400, 500, 600]` (definindo o volume ideal de árvores para convergência de probabilidades)
+- `min_samples_leaf`: `[25, 30, 35]` (focado em regular o tamanho das folhas para uma excelente generalização estatística)
+- Métrica de Otimização: Área Sob a Curva ROC (**AUC-ROC**), essencial para mensurar a precisão no ranqueamento probabilístico de embates.
+
+Os dados de cada ciclo de treinamento, as melhores métricas calculadas pelo scikit-learn, o gráfico de curva ROC e o arquivo de pesos ordenados [feature_importance.md](feature_importance.md) são gravados diretamente sob as execuções do MLflow.
 
 ---
 
@@ -114,7 +118,7 @@ A fase de prognósticos executada pelo script [04_predict.py](04_predict.py) ope
 
 ### 1. Simulação da Fase de Grupos
 Seguindo o design da Copa de 2026 (que é composta por 12 grupos de 4 equipes nacionais), o simulador calcula a classificação agregada obedecendo rigorosamente à estrutura definida:
-- **Alinhamento Linguístico:** Corrigimos mapeamentos específicos de nomes na planilha oficial de jogos (wc_2026_fixtures.csv), mapeando strings variantes para as entidades padronizadas no banco (ex: "USA" para "United States", "Czechia" para "Czech Republic" e "Türkiye" para "Turkey").
+- **Alinhamento Linguístico:** Corrigimos mapeamentos específicos de nomes na planilha oficial de jogos [data/2026/wc_2026_fixtures.csv](data/2026/wc_2026_fixtures.csv), mapeando strings variantes para as entidades padronizadas no banco (ex: "USA" para "United States", "Czechia" para "Czech Republic" e "Türkiye" para "Turkey").
 - **Exploração Bidirecional:** Cada confronto previsto do calendário do arquivo oficial de fixtures é expandido em duas visões (Lado A e Lado B), alimentado com as features históricas de time e oponente e submetido ao preditor.
 - **Resolução de Empates / Vencedor de Partida:** Para determinar o vencedor de cada partida, o modelo calcula a probabilidade de vitória de ambos os quadrantes. Aquele que obter a probabilidade absoluta superior (`prob_win` máximo correspondente a um dado `match_id`) é declarado o vencedor do confronto.
 - **Tabela de Pontos e Classificação:**
